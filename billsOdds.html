@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Bills Odds</title>
+        <link rel="shortcut icon" href="https://dl.dropboxusercontent.com/s/d8kuo01repoyfif/favicon.ico?raw=1" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+		<meta charset="utf-8"/>
+
+</head>
+
+<script type="text/javascript">
+
+window.onload = function() { 
+  	divClone = $("#main_table").clone();
+  	updateTable();
+};
+
+</script>
+
+
+<script>
+var divClone = [];
+var odds = [];
+var week = [];
+var totalWins = [];
+var totalWinProb = [];
+var totalWinProbPlus = [];
+
+for (i = 0; i < 17; i++){
+	odds.push(50);
+	if (i <= 5){
+		week.push(i + 1);
+	} else {
+		week.push(i + 2);
+	}
+	
+	totalWins.push(i+1);
+	totalWinProb.push('');
+	totalWinProbPlus.push('');
+	
+}
+var numSims = 10000;
+var simOdds = [];
+var nWins = [];
+var win_count = [];
+
+var opps = ['@ Rams', 'Titans', '@ Dolphins', '@ Ravens', 'Steelers', '@ Chiefs', 'Packers', 
+			'@ Jets', 'Vikings', 'Browns', '@ Lions', '@ Patriots', 'Jets', 'Dolphins', '@ Bears',
+			'@ Bengals', 'Patriots'];
+
+
+
+function updateTable(){
+	$("#main_table").replaceWith(divClone.clone());
+	$('#main_table').append( '<table>');
+	$('#main_table').append( '<tr>');
+	var table_headings = ['Week', ' Opponent ', 'Odds', '', '','', 'Wins', ' == ', ' >= '];
+	for (var i  = 0; i<table_headings.length; i++){
+		$('#main_table').append('<th>' +table_headings[i] +'</th>');
+	}
+	$('#main_table').append( '</tr>');
+	
+	for (var g = 0; g < opps.length; g++){
+		$('#main_table').append('<tr>');
+		//week number
+		$('#main_table').append('<td>' + week[g] +'</td>');
+		//opponent
+		$('#main_table').append('<td>' + opps[g] +'</td>');
+		//odds
+		var this_odds = '<td><input type="number" id="quantity" name="quantity" min="0" max="100" size="4" value=' + 
+		odds[g] + ' onChange="updateOdds(' + g + ',this.value);"></td>';
+		$('#main_table').append(this_odds);
+		
+		//BLANK
+		$('#main_table').append('<td>    </td>');
+		//BLANK
+		$('#main_table').append('<td>    </td>');
+		//BLANK
+		$('#main_table').append('<td>    </td>');
+		//WINS
+		$('#main_table').append('<td>' + totalWins[g] + '</td>');
+		//WINS==
+		$('#main_table').append('<td>' + totalWinProb[g] + '</td>');
+		//WINS>=
+		$('#main_table').append('<td>' + totalWinProbPlus[g] + '</td>');
+		
+		$('#main_table').append('</tr>');
+	}
+	$('#main_table').append( '</table>');
+}
+
+function updateOdds(g, val){
+	odds[g] = val;
+}
+
+function runSim(){
+
+	nWins = [];
+	win_count = [];
+	
+	// set up win counter
+	for (w = 0; w < 17; w++){
+		win_count[w] = 0;
+	}
+	
+	var n = odds.length;
+	//convert odds to number
+	for (i = 0; i < n; i++){
+		simOdds[i] = Number(odds[i])/100;
+	}
+	
+	// do simulation
+	for (s = 0; s < numSims; s++){
+		var sim_wins = 0;
+		for (g = 0; g < n; g++)
+		{
+			if (simOdds[g] > Math.random())
+			{
+				sim_wins++;
+			}
+		}
+		nWins.push(sim_wins);
+		if (sim_wins > 0){
+			win_count[sim_wins-1] = win_count[sim_wins-1] + 1;
+		}
+	}
+	
+	// count total win odds
+	for (w = 0; w < totalWins.length; w++){
+		totalWinProb[w] = Math.round(100*win_count[w] / numSims) + '%';
+	}
+	
+	// count win+ odds
+	for (w = 0; w < totalWins.length; w++){
+		var count = 0;
+		for (j = w; j < totalWins.length; j++){
+			count = count + win_count[j];
+		}
+		totalWinProbPlus[w] = Math.round(100*count / numSims) + '%';
+	}
+	
+	
+	updateTable();
+}
+
+</script>
+
+<style>
+table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+td {
+text-align:center;
+font-size: 12px;
+padding: 4px;
+border: 1px solid #000;
+ white-space: nowrap;
+  overflow: hidden;
+}
+
+input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+</style>
+
+<body>
+<div id="main_table"></div>
+<div id="runSim"><button id ="run_button" onclick="runSim()">Run Simulation</button></div>
+
+</body>
